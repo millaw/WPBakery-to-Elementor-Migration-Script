@@ -1,3 +1,4 @@
+<?php
 /**
  * Plugin Name: WPBakery to Elementor Migration
  * Description: Converts WPBakery shortcodes into Elementor widgets.
