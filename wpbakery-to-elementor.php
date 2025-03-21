@@ -1,4 +1,3 @@
-<?php
 /**
  * Plugin Name: WPBakery to Elementor Migration
  * Description: Converts WPBakery shortcodes into Elementor widgets.
@@ -47,7 +46,7 @@ function wpbakery_to_elementor_convert() {
         $content = str_replace(['[vc_row]', '[/vc_row]', '[vc_column]', '[/vc_column]'], '', $content);
         
         // Convert WPBakery Text Blocks to Elementor Text Editor Widgets
-        $content = preg_replace('/\[vc_column_text\](.*?)\[\/vc_column_text\]/s', '<!-- wp:paragraph -->\1<!-- /wp:paragraph -->', $content);
+        $content = preg_replace('/\vc_column_text\\[\/vc_column_text\]/s', '<!-- wp:paragraph -->\1<!-- /wp:paragraph -->', $content);
 
         // Convert WPBakery Single Images to Elementor Image Widgets
         $content = preg_replace_callback('/\[vc_single_image image="(\d+)"[^\]]*\]/', function ($matches) {
@@ -61,8 +60,11 @@ function wpbakery_to_elementor_convert() {
         // Convert WPBakery Heading to Elementor Heading Widgets
         $content = preg_replace('/\[vc_custom_heading text="(.*?)" font_size="(.*?)px"[^\]]*\]/', '<!-- wp:heading --><h2 style="font-size:\2px;">\1</h2><!-- /wp:heading -->', $content);
 
+        // Sanitize content before updating
+        $content = wp_kses_post($content);
+
         // Update the post content in the database
-        $wpdb->update(
+        $result = $wpdb->update(
             $wpdb->posts,
             ['post_content' => $content],
             ['ID' => $post['ID']],
@@ -70,8 +72,12 @@ function wpbakery_to_elementor_convert() {
             ['%d']
         );
 
-        // Clear cache for updated pages
-        clean_post_cache($post['ID']);
+        if ($result === false) {
+            error_log("Failed to update post ID {$post['ID']}");
+        } else {
+            // Clear cache for updated pages
+            clean_post_cache($post['ID']);
+        }
     }
 
     echo '<div class="updated"><p>Migration Completed. WPBakery shortcodes have been converted to Elementor-compatible content.</p></div>';
